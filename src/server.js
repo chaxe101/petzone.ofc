@@ -39,6 +39,28 @@ app.post('/users', async (Request, reply) => {
     return reply.status(201).send()
 })
 
+app.post('/authenticate',async(request, reply) => {
+    try{
+        const registerBodySchema = z.object({
+            email: z.string(),
+            password: z.string().min(6)
+        })
+        const {email, password} = registerBodySchema.parse(request.body)
+        const user = await prisma.users.findUnique({
+            where:{
+                email: email
+            }
+        })
+        if(!user){
+            return reply.status(409).send({message: 'E-mail não existe'})
+        }
+        const doespasswordWhatches = await compare(password, user.password_hash)
+        if(!doespasswordWhatches){
+            return reply.status(409).send({message: 'Credenciais inválidas'})
+        }
+    }catch{}
+})
+
 app.listen({
     host:'0.0.0.0',
     port: '3333'
